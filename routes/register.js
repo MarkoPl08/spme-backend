@@ -5,7 +5,7 @@ const {Sequelize} = require("sequelize");
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role, packageId } = req.body;
     try {
         const existingUser = await User.findOne({
             where: {
@@ -25,7 +25,8 @@ router.post('/', async (req, res) => {
             Username: username,
             Email: email,
             PasswordHash: hashedPassword,
-            RoleID: role
+            RoleID: role,
+            PackageID: packageId
         });
         res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
