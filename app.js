@@ -9,6 +9,8 @@ const usersRouter = require('./routes/users');
 const loginRouter = require('./routes/login');
 const registerRouter = require('./routes/register');
 const authRoutes = require('./routes/auth');
+const verifyRoutes = require('./routes/verifyToken');
+const authenticateToken = require('./middlewares/authenticateToken');
 const cors = require('cors');
 
 const app = express();
@@ -29,10 +31,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/users',authenticateToken, usersRouter);
 app.use('/login', loginRouter);
 app.use('/register', registerRouter);
 app.use('/auth', authRoutes);
+app.use('/api', verifyRoutes);
 
 app.use(function(req, res, next) {
   res.status(404).send('404 - Not Found');

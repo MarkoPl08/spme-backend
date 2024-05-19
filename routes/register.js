@@ -1,11 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const {Sequelize} = require("sequelize");
+const { Sequelize } = require("sequelize");
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-    const { username, email, password, role, packageId } = req.body;
+router.post('/register', async (req, res) => {
+    const { username, email, password, roleId, packageId } = req.body;
     try {
         const existingUser = await User.findOne({
             where: {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
             Username: username,
             Email: email,
             PasswordHash: hashedPassword,
-            RoleID: role,
+            RoleID: roleId,
             PackageID: packageId
         });
         res.status(201).json({ message: 'User registered successfully', user });
@@ -34,6 +34,5 @@ router.post('/', async (req, res) => {
         res.status(500).json({ error: 'Error registering new user', details: error.message });
     }
 });
-
 
 module.exports = router;

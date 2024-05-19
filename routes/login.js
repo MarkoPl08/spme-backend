@@ -4,6 +4,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const {sign} = require("jsonwebtoken");
 
 passport.use(new LocalStrategy({
     usernameField: 'email',
@@ -24,22 +25,22 @@ passport.use(new LocalStrategy({
     }
 }));
 
-router.post('/', (req, res, next) => {
+router.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) {
-            console.error("Login error:", err); // Log the error
+            console.error("Login error:", err);
             return res.status(500).json({ error: 'Internal Server Error', details: err.message });
         }
         if (!user) {
             return res.status(400).json({ message: info.message });
         }
-        req.logIn(user, { session: false }, (err) => {
-            if (err) {
-                console.error("Session error:", err);
-                return res.status(500).json({ error: 'Session error', details: err.message });
-            }
-            return res.json({ message: 'Logged in successfully', user });
-        });
+        const token = sign(
+            { userId: user.UserID },
+            'your_secret_key',
+            { expiresIn: '1h' }
+        );
+
+        return res.json({ message: 'Logged in successfully', token });
     })(req, res, next);
 });
 
