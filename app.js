@@ -9,6 +9,7 @@ const usersRouter = require('./routes/users');
 const loginRouter = require('./routes/login');
 const registerRouter = require('./routes/register');
 const verifyToken = require('./routes/verifyToken');
+const subscriptionRoutes = require('./routes/packages');
 const authRoutes = require('./routes/auth');
 const authenticateToken = require('./middlewares/authenticateToken');
 const cors = require('cors');
@@ -37,6 +38,8 @@ app.use('/', loginRouter);
 app.use('/', registerRouter);
 app.use('/api/auth', authRoutes);
 app.use('/', verifyToken);
+app.use('/api/subscriptions', subscriptionRoutes);
+
 
 app.use(function(req, res, next) {
   res.status(404).send('404 - Not Found');

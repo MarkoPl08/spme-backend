@@ -30,10 +30,7 @@ const User = sequelize.define('User', {
     },
     PackageID: {
         type: DataTypes.INTEGER,
-        references: {
-            model: 'SubscriptionPackages',
-            key: 'PackageID'
-        }
+        allowNull: true
     },
     CreatedAt: {
         type: DataTypes.DATE,
@@ -42,6 +39,10 @@ const User = sequelize.define('User', {
     UpdatedAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
+    },
+    LastPackageUpdate: {
+        type: DataTypes.DATE,
+        allowNull: true
     }
 }, {
     tableName: 'Users',
