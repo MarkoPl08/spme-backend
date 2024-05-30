@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const User = require('../models/User');
-const Photos = require('../models/Photos');
+const { Photos, User } = require('../models');
 const SubscriptionPackages  = require('../models/SubscriptionPackages');
 
 const storage = multer.diskStorage({
@@ -72,6 +71,22 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
     } catch (error) {
         console.error('Error uploading photo:', error);
         res.status(500).json({ message: 'Error uploading photo', error: error.message });
+    }
+});
+
+
+router.get('/all', async (req, res) => {
+    try {
+        const photos = await Photos.findAll({
+            include: {
+                model: User,
+                attributes: ['Username']
+            }
+        });
+        res.json(photos);
+    } catch (error) {
+        console.error('Error fetching photos:', error);
+        res.status(500).json({ message: 'Error fetching photos', error: error.message });
     }
 });
 

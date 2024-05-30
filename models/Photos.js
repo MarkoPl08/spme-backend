@@ -1,6 +1,5 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./User');
 
 const Photos = sequelize.define('Photos', {
     PhotoID: {
@@ -11,7 +10,7 @@ const Photos = sequelize.define('Photos', {
     UserID: {
         type: DataTypes.INTEGER,
         references: {
-            model: User,
+            model: 'Users',
             key: 'UserID'
         }
     },
