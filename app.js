@@ -10,6 +10,7 @@ const loginRouter = require('./routes/login');
 const registerRouter = require('./routes/register');
 const verifyToken = require('./routes/verifyToken');
 const subscriptionRoutes = require('./routes/packages');
+const photoRoutes = require('./routes/photoRoutes');
 const authRoutes = require('./routes/auth');
 const authenticateToken = require('./middlewares/authenticateToken');
 const cors = require('cors');
@@ -39,6 +40,7 @@ app.use('/', registerRouter);
 app.use('/api/auth', authRoutes);
 app.use('/', verifyToken);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/photos', photoRoutes);
 
 
 app.use(function(req, res, next) {
