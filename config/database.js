@@ -12,7 +12,6 @@ const sequelize = new Sequelize('spme_db', 'root', 'root', {
     }
 });
 
-// Test the connection
 sequelize.authenticate()
     .then(() => {
         console.log('Connection has been established successfully.');
