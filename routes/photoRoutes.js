@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const User = require('../models/User');
-const Photo = require('../models/Photos');
+const Photos = require('../models/Photos');
 const SubscriptionPackages  = require('../models/SubscriptionPackages');
 
 const storage = multer.diskStorage({
@@ -17,9 +17,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+const sharp = require('sharp');
+
 router.post('/upload', upload.single('photo'), async (req, res) => {
-    const { userId, description, hashtags } = req.body;
-    const photoSize = req.file.size / (1024 * 1024); // Convert to MB
+    const { userId, description, hashtags, resizeWidth, resizeHeight, format } = req.body;
+    const photoSize = req.file.size / (1024 * 1024);
 
     try {
         const user = await User.findByPk(userId);
@@ -27,26 +29,41 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const storagePackage = await SubscriptionPackages.findByPk(user.PackageID);
-        if (!storagePackage) {
+        const subscriptionPackage = await SubscriptionPackages.findByPk(user.PackageID);
+        if (!subscriptionPackage) {
             return res.status(404).json({ message: 'Subscription package not found' });
         }
 
-        if (user.UploadCount >= storagePackage.UploadLimit) {
+        if (user.UploadCount >= subscriptionPackage.UploadLimit) {
             return res.status(403).json({ message: 'Upload limit exceeded' });
         }
 
-        if (user.StorageUsed + photoSize > storagePackage.StorageLimit) {
+        if (user.StorageUsed + photoSize > subscriptionPackage.StorageLimit) {
             return res.status(403).json({ message: 'Storage limit exceeded' });
         }
+
+        let processedImage = sharp(req.file.path);
+        if (resizeWidth || resizeHeight) {
+            processedImage = processedImage.resize(parseInt(resizeWidth), parseInt(resizeHeight));
+        }
+
+        const validFormats = ['jpeg', 'png', 'webp'];
+        if (validFormats.includes(format)) {
+            processedImage = processedImage.toFormat(format);
+        } else {
+            return res.status(400).json({ message: `Invalid format: ${format}` });
+        }
+
+        const processedPath = `uploads/processed-${req.file.filename}.${format}`;
+        await processedImage.toFile(processedPath);
 
         user.UploadCount += 1;
         user.StorageUsed += photoSize;
         await user.save();
 
-        const photo = await Photo.create({
+        const photo = await Photos.create({
             UserID: userId,
-            PhotoPath: req.file.path,
+            PhotoPath: processedPath,
             Description: description,
             Hashtags: hashtags
         });
