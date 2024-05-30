@@ -1,8 +1,12 @@
 const express = require('express');
-const router = express.Router();
 const bcrypt = require('bcrypt');
-const User = require('../models/User'); // Adjust the path as necessary
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const router = express.Router();
+
 require('dotenv').config();
+
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 async function fetchWithNodeFetch(url, options) {
     const fetch = (await import('node-fetch')).default;
@@ -30,12 +34,12 @@ async function validateGoogleToken(token) {
 
 async function findOrCreateUser(email, username) {
     try {
-        let user = await User.findOne({ where: { Email: email } });
+        let user = await User.findOne({where: {Email: email}});
         if (!user) {
             user = await User.create({
                 Username: username,
                 Email: email,
-                PasswordHash: bcrypt.hashSync('default_password', 10) // Default password should be changed by user
+                PasswordHash: bcrypt.hashSync('default_password', 10)
             });
         }
         return user;
@@ -45,30 +49,36 @@ async function findOrCreateUser(email, username) {
     }
 }
 
+function generateJwtToken(user) {
+    return jwt.sign({userId: user.UserID, email: user.Email}, SECRET_KEY, {expiresIn: '1h'});
+}
+
 router.post('/google', async (req, res) => {
-    const { token } = req.body;
+    const {token} = req.body;
     try {
         const userData = await validateGoogleToken(token);
         const user = await findOrCreateUser(userData.email, userData.name);
+        const jwtToken = generateJwtToken(user);
         res.json({
             message: "Token received and validated successfully",
             user: {
                 UserID: user.UserID,
                 Username: user.Username,
                 Email: user.Email
-            }
+            },
+            token: jwtToken
         });
     } catch (error) {
         console.error('Error in /google route:', error);
-        res.status(401).json({ message: "Invalid token", details: error.message });
+        res.status(401).json({message: "Invalid token", details: error.message});
     }
 });
 
 router.post('/github', async (req, res) => {
-    const { code } = req.body;
+    const {code} = req.body;
 
     if (!code) {
-        return res.status(400).json({ message: 'No code received from GitHub.' });
+        return res.status(400).json({message: 'No code received from GitHub.'});
     }
 
     try {
@@ -87,7 +97,7 @@ router.post('/github', async (req, res) => {
         const tokenData = await tokenResponse.json();
 
         if (!tokenData.access_token) {
-            return res.status(401).json({ message: 'GitHub did not return an access token.' });
+            return res.status(401).json({message: 'GitHub did not return an access token.'});
         }
 
         const userDataResponse = await fetchWithNodeFetch('https://api.github.com/user', {
@@ -98,6 +108,7 @@ router.post('/github', async (req, res) => {
         const userData = await userDataResponse.json();
 
         const user = await findOrCreateUser(userData.email || `${userData.login}@github.com`, userData.login);
+        const jwtToken = generateJwtToken(user);
 
         res.json({
             message: "Login successful",
@@ -105,11 +116,12 @@ router.post('/github', async (req, res) => {
                 UserID: user.UserID,
                 Username: user.Username,
                 Email: user.Email
-            }
+            },
+            token: jwtToken
         });
     } catch (error) {
         console.error('Failed to login with GitHub:', error);
-        res.status(500).json({ message: "Internal server error", details: error.message });
+        res.status(500).json({message: "Internal server error", details: error.message});
     }
 });
 
