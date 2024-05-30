@@ -32,6 +32,14 @@ const User = sequelize.define('User', {
         type: DataTypes.INTEGER,
         allowNull: true
     },
+    UploadCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    StorageUsed: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0
+    },
     CreatedAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW

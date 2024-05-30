@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const User = require('../models/User');
 const Photo = require('../models/Photos');
+const SubscriptionPackages  = require('../models/SubscriptionPackages');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -24,6 +25,19 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
         const user = await User.findByPk(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        const storagePackage = await SubscriptionPackages.findByPk(user.PackageID);
+        if (!storagePackage) {
+            return res.status(404).json({ message: 'Subscription package not found' });
+        }
+
+        if (user.UploadCount >= storagePackage.UploadLimit) {
+            return res.status(403).json({ message: 'Upload limit exceeded' });
+        }
+
+        if (user.StorageUsed + photoSize > storagePackage.StorageLimit) {
+            return res.status(403).json({ message: 'Storage limit exceeded' });
         }
 
         user.UploadCount += 1;

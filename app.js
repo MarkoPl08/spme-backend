@@ -55,4 +55,22 @@ app.use(function(err, req, res, next) {
   res.render('error', { error: err });
 });
 
+const cron = require('node-cron');
+const User = require('./models/User');
+
+cron.schedule('0 0 * * *', async () => {
+  try {
+    const users = await User.findAll();
+    for (let user of users) {
+      user.UploadCount = 0;
+      user.StorageUsed = 0.0;
+      await user.save();
+    }
+    console.log('Reset upload counts and storage used for all users');
+  } catch (error) {
+    console.error('Error resetting upload counts and storage used:', error);
+  }
+});
+
+
 module.exports = app;
