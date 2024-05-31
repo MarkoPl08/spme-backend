@@ -153,7 +153,7 @@ router.get('/download/original/:photoId', async (req, res) => {
             return res.status(404).json({message: 'Photo not found'});
         }
 
-        const filePath = path.join(__dirname, '..', photo.OriginalPhotoPath);  // Use the original file path
+        const filePath = path.join(__dirname, '..', photo.OriginalPhotoPath);
         res.download(filePath, (err) => {
             if (err) {
                 console.error('Error downloading original photo:', err);
