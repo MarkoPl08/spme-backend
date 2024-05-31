@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
             Username: username,
             Email: email,
             PasswordHash: hashedPassword,
-            RoleID: roleId,
+            RoleID: 2,
             PackageID: packageId
         });
         res.status(201).json({ message: 'User registered successfully', user });

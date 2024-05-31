@@ -4,7 +4,8 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const {sign} = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 passport.use(new LocalStrategy({
     usernameField: 'email',
@@ -34,11 +35,13 @@ router.post('/login', (req, res, next) => {
         if (!user) {
             return res.status(400).json({ message: info.message });
         }
-        const token = sign(
-            { userId: user.UserID },
-            'your_secret_key',
+        const token = jwt.sign(
+            { userId: user.UserID, role: user.RoleID },
+            process.env.JWT_SECRET,  // Use the environment variable here
             { expiresIn: '1h' }
         );
+
+        console.log("Generated JWT token:", token);
 
         return res.json({ message: 'Logged in successfully', token });
     })(req, res, next);

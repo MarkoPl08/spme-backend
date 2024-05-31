@@ -50,12 +50,18 @@ router.get('/consumption/:userId', async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // Mock data for consumption
-        const consumption = {
-            uploadCount: 10,
-            storageUsed: 5000, // in MB
-        };
-        res.json({ user, consumption });
+
+        const subscriptionPackage = await SubscriptionPackages.findByPk(user.PackageID);
+        if (!subscriptionPackage) {
+            return res.status(404).json({ message: 'Subscription package not found' });
+        }
+
+        res.json({
+            uploadCount: user.UploadCount,
+            storageUsed: user.StorageUsed,
+            uploadLimit: subscriptionPackage.UploadLimit,
+            storageLimit: subscriptionPackage.StorageLimit
+        });
     } catch (error) {
         console.error('Error fetching consumption:', error);
         res.status(500).json({ message: 'Error fetching consumption', error: error.message });
