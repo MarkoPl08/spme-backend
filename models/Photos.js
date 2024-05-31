@@ -18,6 +18,10 @@ const Photos = sequelize.define('Photos', {
         type: DataTypes.STRING(255),
         allowNull: false
     },
+    OriginalPhotoPath: {
+        type: DataTypes.STRING(255),
+        allowNull: false
+    },
     Description: {
         type: DataTypes.TEXT
     },
