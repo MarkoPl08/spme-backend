@@ -33,6 +33,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(passport.initialize());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/', indexRouter);
 app.use('/users',authenticateToken, usersRouter);
 app.use('/', loginRouter);

@@ -74,7 +74,6 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
     }
 });
 
-
 router.get('/all', async (req, res) => {
     try {
         const photos = await Photos.findAll({
@@ -89,5 +88,6 @@ router.get('/all', async (req, res) => {
         res.status(500).json({ message: 'Error fetching photos', error: error.message });
     }
 });
+
 
 module.exports = router;
