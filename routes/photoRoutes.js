@@ -111,31 +111,30 @@ router.put('/update/:photoId', async (req, res) => {
     }
 });
 
-router.get('/search', async (req, res) => {
-    const { description, hashtags, startDate, endDate, username } = req.query;
-    const query = {};
+router.post('/search', async (req, res) => {
+    const { description, hashtags, startDate, endDate, username } = req.body;
+    let where = {};
 
-    if (description) query.Description = { [Op.like]: `%${description}%` };
-    if (hashtags) query.Hashtags = { [Op.like]: `%${hashtags}%` };
-    if (startDate || endDate) {
-        query.UploadDateTime = {};
-        if (startDate) query.UploadDateTime[Op.gte] = new Date(startDate);
-        if (endDate) query.UploadDateTime[Op.lte] = new Date(endDate);
+    if (description) {
+        where.Description = { [Op.like]: `%${description}%` };
     }
-    if (username) {
-        const user = await User.findOne({ where: { Username: username } });
-        if (user) {
-            query.UserID = user.UserID;
-        }
+    if (hashtags) {
+        where.Hashtags = { [Op.like]: `%${hashtags}%` };
+    }
+    if (startDate && endDate) {
+        where.UploadDateTime = { [Op.between]: [new Date(startDate), new Date(endDate)] };
     }
 
     try {
         const photos = await Photos.findAll({
-            where: query,
-            include: {
-                model: User,
-                attributes: ['Username']
-            }
+            where,
+            include: [
+                {
+                    model: User,
+                    attributes: ['Username'],
+                    where: username ? { Username: { [Op.like]: `%${username}%` } } : {},
+                }
+            ]
         });
         res.json(photos);
     } catch (error) {
