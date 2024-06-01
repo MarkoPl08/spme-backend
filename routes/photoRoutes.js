@@ -5,6 +5,9 @@ const path = require('path');
 const {Photos, User} = require('../models');
 const SubscriptionPackages = require('../models/SubscriptionPackages');
 const {Op} = require('sequelize');
+const sharp = require('sharp');
+const {uploadFile, deleteFile} = require('../config/awsConfig');
+const {writeFileSync, existsSync, mkdirSync} = require("node:fs");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -15,33 +18,44 @@ const storage = multer.diskStorage({
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
-const upload = multer({storage: storage});
+const upload = multer({ storage: storage });
 
-const sharp = require('sharp');
+function ensureDirectoryExistence(filePath) {
+    const dirname = path.dirname(filePath);
+    if (existsSync(dirname)) {
+        return true;
+    }
+    ensureDirectoryExistence(dirname);
+    mkdirSync(dirname);
+}
 
 router.post('/upload', upload.single('photo'), async (req, res) => {
-    const {userId, description, hashtags, resizeWidth, resizeHeight, format} = req.body;
+    const { userId, description, hashtags, resizeWidth, resizeHeight, format } = req.body;
     const originalFilePath = req.file.path;
     const photoSize = req.file.size / (1024 * 1024);
+    const bucketName = process.env.AWS_S3_BUCKET_NAME;
 
     try {
         const user = await User.findByPk(userId);
         if (!user) {
-            return res.status(404).json({message: 'User not found'});
+            return res.status(404).json({ message: 'User not found' });
         }
 
         const subscriptionPackage = await SubscriptionPackages.findByPk(user.PackageID);
         if (!subscriptionPackage) {
-            return res.status(404).json({message: 'Subscription package not found'});
+            return res.status(404).json({ message: 'Subscription package not found' });
         }
 
         if (user.UploadCount >= subscriptionPackage.UploadLimit) {
-            return res.status(403).json({message: 'Upload limit exceeded'});
+            return res.status(403).json({ message: 'Upload limit exceeded' });
         }
 
         if (user.StorageUsed + photoSize > subscriptionPackage.StorageLimit) {
-            return res.status(403).json({message: 'Storage limit exceeded'});
+            return res.status(403).json({ message: 'Storage limit exceeded' });
         }
+
+        const originalKey = `original/${Date.now()}-${req.file.originalname}`;
+        await uploadFile(originalFilePath, bucketName, originalKey);
 
         let processedImage = sharp(req.file.path);
         if (resizeWidth || resizeHeight) {
@@ -52,11 +66,18 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
         if (validFormats.includes(format)) {
             processedImage = processedImage.toFormat(format);
         } else {
-            return res.status(400).json({message: `Invalid format: ${format}`});
+            return res.status(400).json({ message: `Invalid format: ${format}` });
         }
 
-        const processedPath = `uploads/processed-${req.file.filename}.${format}`;
-        await processedImage.toFile(processedPath);
+        const processedBuffer = await processedImage.toBuffer();
+        const processedKey = `processed/${Date.now()}-${req.file.originalname}.${format}`;
+        const processedPath = path.join(__dirname, '..', 'uploads', processedKey);
+
+        ensureDirectoryExistence(processedPath);
+
+        writeFileSync(processedPath, processedBuffer);
+
+        await uploadFile(processedPath, bucketName, processedKey);
 
         user.UploadCount += 1;
         user.StorageUsed += photoSize;
@@ -64,16 +85,16 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
 
         const photo = await Photos.create({
             UserID: userId,
-            PhotoPath: processedPath,
-            OriginalPhotoPath: originalFilePath,
+            PhotoPath: processedKey,
+            OriginalPhotoPath: originalKey,
             Description: description,
             Hashtags: hashtags
         });
 
-        res.json({message: 'Photo uploaded successfully', photo});
+        res.json({ message: 'Photo uploaded successfully', photo });
     } catch (error) {
         console.error('Error uploading photo:', error);
-        res.status(500).json({message: 'Error uploading photo', error: error.message});
+        res.status(500).json({ message: 'Error uploading photo', error: error.message });
     }
 });
 
@@ -186,6 +207,5 @@ router.get('/download/processed/:photoId', async (req, res) => {
         res.status(500).json({message: 'Error fetching photo', error: error.message});
     }
 });
-
 
 module.exports = router;

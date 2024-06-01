@@ -14,6 +14,7 @@ const photoRoutes = require('./routes/photoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/auth');
 const authenticateToken = require('./middlewares/authenticateToken');
+const logAction = require('./middlewares/logging');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -33,6 +34,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(passport.initialize());
+
+app.use(logAction);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
