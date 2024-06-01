@@ -1,5 +1,5 @@
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const {S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3');
+const {getSignedUrl} = require('@aws-sdk/s3-request-presigner');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -23,11 +23,8 @@ async function uploadFile(filePath, bucketName, key) {
     };
 
     try {
-        const data = await s3.send(new PutObjectCommand(uploadParams));
-        console.log("Upload success", data);
-        return data;
+        return await s3.send(new PutObjectCommand(uploadParams));
     } catch (err) {
-        console.log("Error", err);
         throw err;
     }
 }
@@ -44,7 +41,6 @@ async function downloadFile(bucketName, key, downloadPath) {
         const bodyContents = await streamToBuffer(data.Body);
         fs.writeFileSync(downloadPath, bodyContents);
     } catch (err) {
-        console.log("Error", err);
         throw err;
     }
 }
@@ -67,13 +63,11 @@ async function deleteFile(bucketName, key) {
     };
 
     try {
-        const data = await s3.send(new DeleteObjectCommand(deleteParams));
-        console.log("Delete success", data);
-        return data;
+        return await s3.send(new DeleteObjectCommand(deleteParams));
     } catch (err) {
-        console.log("Error", err);
         throw err;
     }
 }
 
-module.exports = { uploadFile, downloadFile, deleteFile };
+// Exporting functions as an adapter interface
+module.exports = {uploadFile, downloadFile, deleteFile};

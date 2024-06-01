@@ -6,13 +6,13 @@ const passport = require('passport');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
-const loginRouter = require('./routes/login');
-const registerRouter = require('./routes/register');
+const loginRouter = require('./routes/auth/login');
+const registerRouter = require('./routes/auth/register');
 const verifyToken = require('./routes/verifyToken');
 const subscriptionRoutes = require('./routes/packages');
 const photoRoutes = require('./routes/photoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/auth/auth');
 const authenticateToken = require('./middlewares/authenticateToken');
 const logAction = require('./middlewares/logging');
 const cors = require('cors');
@@ -74,7 +74,6 @@ cron.schedule('0 0 * * *', async () => {
       user.StorageUsed = 0.0;
       await user.save();
     }
-    console.log('Reset upload counts and storage used for all users');
   } catch (error) {
     console.error('Error resetting upload counts and storage used:', error);
   }

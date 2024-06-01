@@ -4,17 +4,13 @@ const { User, Photos} = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
 
 const isAdmin = (req, res, next) => {
-    console.log("Checking admin role...");
     if (!req.user) {
-        console.log("No user found in request");
         return res.status(403).json({ message: 'Forbidden: Admins only' });
     }
 
     const userRole = req.user.role;
-    console.log("User role:", userRole);
 
-    if (userRole !== 1) { // Assuming role 1 is admin
-        console.log("Forbidden: User is not an admin");
+    if (userRole !== 1) {
         return res.status(403).json({ message: 'Forbidden: Admins only' });
     }
     next();

@@ -5,9 +5,9 @@ const path = require('path');
 const {Photos, User} = require('../models');
 const SubscriptionPackages = require('../models/SubscriptionPackages');
 const {Op} = require('sequelize');
-const sharp = require('sharp');
 const {uploadFile, deleteFile} = require('../config/awsConfig');
-const {writeFileSync, existsSync, mkdirSync} = require("node:fs");
+const PhotoProcessingFacade = require('../facades/photoProcessingFacade');
+const {photoUploaded, photoUpdated} = require("../observers/photoEventWatcher");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -18,16 +18,7 @@ const storage = multer.diskStorage({
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage });
-
-function ensureDirectoryExistence(filePath) {
-    const dirname = path.dirname(filePath);
-    if (existsSync(dirname)) {
-        return true;
-    }
-    ensureDirectoryExistence(dirname);
-    mkdirSync(dirname);
-}
+const upload = multer({storage: storage});
 
 router.post('/upload', upload.single('photo'), async (req, res) => {
     const { userId, description, hashtags, resizeWidth, resizeHeight, format } = req.body;
@@ -57,26 +48,11 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
         const originalKey = `original/${Date.now()}-${req.file.originalname}`;
         await uploadFile(originalFilePath, bucketName, originalKey);
 
-        let processedImage = sharp(req.file.path);
-        if (resizeWidth || resizeHeight) {
-            processedImage = processedImage.resize(parseInt(resizeWidth), parseInt(resizeHeight));
-        }
-
-        const validFormats = ['jpeg', 'png', 'webp'];
-        if (validFormats.includes(format)) {
-            processedImage = processedImage.toFormat(format);
-        } else {
-            return res.status(400).json({ message: `Invalid format: ${format}` });
-        }
-
-        const processedBuffer = await processedImage.toBuffer();
+        const processedBuffer = await PhotoProcessingFacade.processPhoto(originalFilePath, { resizeWidth, resizeHeight, format });
         const processedKey = `processed/${Date.now()}-${req.file.originalname}.${format}`;
         const processedPath = path.join(__dirname, '..', 'uploads', processedKey);
 
-        ensureDirectoryExistence(processedPath);
-
-        writeFileSync(processedPath, processedBuffer);
-
+        PhotoProcessingFacade.saveFile(processedBuffer, processedPath);
         await uploadFile(processedPath, bucketName, processedKey);
 
         user.UploadCount += 1;
@@ -90,6 +66,8 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
             Description: description,
             Hashtags: hashtags
         });
+
+        photoUploaded(photo);
 
         res.json({ message: 'Photo uploaded successfully', photo });
     } catch (error) {
@@ -114,23 +92,25 @@ router.get('/all', async (req, res) => {
 });
 
 router.put('/update/:photoId', async (req, res) => {
-    const {photoId} = req.params;
-    const {description, hashtags} = req.body;
+    const { photoId } = req.params;
+    const { description, hashtags } = req.body;
 
     try {
         const photo = await Photos.findByPk(photoId);
         if (!photo) {
-            return res.status(404).json({message: 'Photo not found'});
+            return res.status(404).json({ message: 'Photo not found' });
         }
 
         photo.Description = description || photo.Description;
         photo.Hashtags = hashtags || photo.Hashtags;
         await photo.save();
 
-        res.json({message: 'Photo updated successfully', photo});
+        photoUpdated(photo);
+
+        res.json({ message: 'Photo updated successfully', photo });
     } catch (error) {
         console.error('Error updating photo:', error);
-        res.status(500).json({message: 'Error updating photo', error: error.message});
+        res.status(500).json({ message: 'Error updating photo', error: error.message });
     }
 });
 

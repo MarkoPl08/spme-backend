@@ -1,12 +1,19 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const User = require('../../models/User');
 const { Sequelize } = require("sequelize");
 const router = express.Router();
 
 router.post('/register', async (req, res) => {
-    const { username, email, password, roleId, packageId } = req.body;
+    const { username, email, password, packageId } = req.body;
+    const roleId = 2;
+
     try {
+        if (!username || !email || !password || !packageId) {
+            console.error('Missing required fields');
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
         const existingUser = await User.findOne({
             where: {
                 [Sequelize.Op.or]: [
@@ -17,6 +24,7 @@ router.post('/register', async (req, res) => {
         });
 
         if (existingUser) {
+            console.error('Username or email already exists');
             return res.status(400).json({ error: 'Username or email already exists' });
         }
 
@@ -25,12 +33,12 @@ router.post('/register', async (req, res) => {
             Username: username,
             Email: email,
             PasswordHash: hashedPassword,
-            RoleID: 2,
+            RoleID: roleId,
             PackageID: packageId
         });
         res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
-        console.error(error);
+        console.error('Error during registration:', error);
         res.status(500).json({ error: 'Error registering new user', details: error.message });
     }
 });

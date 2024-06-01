@@ -8,7 +8,6 @@ passport.use(new GoogleStrategy({
         callbackURL: "http://localhost:3000/auth/google/callback"
     },
     async (accessToken, refreshToken, profile, cb) => {
-        console.log(profile);
         try {
             const user = await User.findOrCreate({
                 where: { googleId: profile.id },

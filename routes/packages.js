@@ -41,8 +41,6 @@ router.post('/setPackage', async (req, res) => {
     }
 });
 
-
-// Track and update user’s consumption (mock example)
 router.get('/consumption/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
@@ -68,7 +66,6 @@ router.get('/consumption/:userId', async (req, res) => {
     }
 });
 
-// Allow user to change package once a day (mock example)
 router.post('/changePackage', async (req, res) => {
     const { userId, newPackageId } = req.body;
     try {
