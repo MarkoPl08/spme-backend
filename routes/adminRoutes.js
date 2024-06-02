@@ -22,7 +22,7 @@ router.use(isAdmin);
 router.get('/users', async (req, res) => {
     try {
         const users = await User.findAll();
-        res.json(users);
+        res.status(200).json(users);  // Explicitly sending 200 status code
     } catch (error) {
         res.status(500).json({ message: 'Error fetching users', error });
     }
@@ -58,7 +58,7 @@ router.delete('/photos/:photoId', authenticateToken, isAdmin, async (req, res) =
             return res.status(404).json({ message: 'Photo not found' });
         }
         await photo.destroy();
-        res.json({ message: 'Photo deleted successfully' });
+        res.status(200).json({ message: 'Photo deleted successfully' });
     } catch (error) {
         console.error('Error deleting photo:', error);
         res.status(500).json({ message: 'Error deleting photo', error: error.message });
