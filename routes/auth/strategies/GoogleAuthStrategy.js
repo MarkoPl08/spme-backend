@@ -28,7 +28,8 @@ class GoogleAuthStrategy {
             user = await User.create({
                 Username: username,
                 Email: email,
-                PasswordHash: bcrypt.hashSync('default_password', 10)
+                PasswordHash: bcrypt.hashSync('default_password', 10),
+                RoleID: 2
             });
         }
         return user;

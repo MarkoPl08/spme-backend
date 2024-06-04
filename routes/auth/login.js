@@ -3,9 +3,10 @@ const router = express.Router();
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const {createStrategy} = require("./AuthStrategyFactory");
+const loggingAspect = require('../../aspects/loggingAspect');
 require('dotenv').config();
 createStrategy('local');
-router.post('/login', (req, res, next) => {
+router.post('/login', loggingAspect, (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) {
             console.error("Login error:", err);

@@ -35,7 +35,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(passport.initialize());
 
-app.use(logAction);
+//app.use(logAction);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

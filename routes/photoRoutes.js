@@ -8,6 +8,7 @@ const {Op} = require('sequelize');
 const {uploadFile, deleteFile} = require('../config/awsConfig');
 const PhotoProcessingFacade = require('../facades/photoProcessingFacade');
 const {photoUploaded, photoUpdated} = require("../observers/photoEventWatcher");
+const loggingAspect = require('../aspects/loggingAspect');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 
-router.post('/upload', upload.single('photo'), async (req, res) => {
+router.post('/upload', loggingAspect, upload.single('photo'), async (req, res) => {
     const { userId, description, hashtags, resizeWidth, resizeHeight, format } = req.body;
     const originalFilePath = req.file.path;
     const photoSize = req.file.size / (1024 * 1024);
@@ -76,7 +77,7 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
     }
 });
 
-router.get('/all', async (req, res) => {
+router.get('/all', loggingAspect, async (req, res) => {
     try {
         const photos = await Photos.findAll({
             include: {
@@ -91,7 +92,7 @@ router.get('/all', async (req, res) => {
     }
 });
 
-router.put('/update/:photoId', async (req, res) => {
+router.put('/update/:photoId', loggingAspect, async (req, res) => {
     const { photoId } = req.params;
     const { description, hashtags } = req.body;
 
@@ -114,7 +115,7 @@ router.put('/update/:photoId', async (req, res) => {
     }
 });
 
-router.post('/search', async (req, res) => {
+router.post('/search', loggingAspect, async (req, res) => {
     const {description, hashtags, startDate, endDate, username} = req.body;
     let where = {};
 
@@ -146,7 +147,7 @@ router.post('/search', async (req, res) => {
     }
 });
 
-router.get('/download/original/:photoId', async (req, res) => {
+router.get('/download/original/:photoId', loggingAspect, async (req, res) => {
     const {photoId} = req.params;
     try {
         const photo = await Photos.findByPk(photoId);
@@ -167,7 +168,7 @@ router.get('/download/original/:photoId', async (req, res) => {
     }
 });
 
-router.get('/download/processed/:photoId', async (req, res) => {
+router.get('/download/processed/:photoId', loggingAspect, async (req, res) => {
     const {photoId} = req.params;
     try {
         const photo = await Photos.findByPk(photoId);

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const loggingAspect = require('../aspects/loggingAspect');
 
-router.post('/', async (req, res) => {
+router.post('/', loggingAspect, async (req, res) => {
   try {
     const { username, email, password } = req.body;
     const newUser = await User.create({
@@ -16,7 +17,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', loggingAspect, async (req, res) => {
   try {
     const users = await User.findAll();
     res.status(200).json(users);
