@@ -4,8 +4,9 @@ const User = require('../../models/User');
 const {Sequelize} = require("sequelize");
 const {validateEmail} = require('../../utils/validation');
 const router = express.Router();
+const loggingAspect = require('../../aspects/loggingAspect');
 
-router.post('/register', async (req, res) => {
+router.post('/register', loggingAspect, async (req, res) => {
     const {username, email, password, packageId} = req.body;
     const roleId = 2;
 

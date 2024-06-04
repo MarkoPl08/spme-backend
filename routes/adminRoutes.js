@@ -1,34 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { User, Photos} = require('../models');
+const { User, Photos } = require('../models');
 const authenticateToken = require('../middlewares/authenticateToken');
-
-const isAdmin = (req, res, next) => {
-    if (!req.user) {
-        return res.status(403).json({ message: 'Forbidden: Admins only' });
-    }
-
-    const userRole = req.user.role;
-
-    if (userRole !== 1) {
-        return res.status(403).json({ message: 'Forbidden: Admins only' });
-    }
-    next();
-};
+const loggingAspect = require('../aspects/loggingAspect');
+const adminAspect = require('../aspects/adminAspect');
 
 router.use(authenticateToken);
-router.use(isAdmin);
 
-router.get('/users', async (req, res) => {
+router.get('/users', adminAspect,loggingAspect, async (req, res) => {
     try {
         const users = await User.findAll();
-        res.status(200).json(users);  // Explicitly sending 200 status code
+        res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching users', error });
     }
 });
 
-router.put('/users/:userId', async (req, res) => {
+router.put('/users/:userId', adminAspect, loggingAspect, async (req, res) => {
     const { userId } = req.params;
     const { username, email, packageId, roleId } = req.body;
 
@@ -50,7 +38,7 @@ router.put('/users/:userId', async (req, res) => {
     }
 });
 
-router.delete('/photos/:photoId', authenticateToken, isAdmin, async (req, res) => {
+router.delete('/photos/:photoId', adminAspect, loggingAspect, async (req, res) => {
     const { photoId } = req.params;
     try {
         const photo = await Photos.findByPk(photoId);

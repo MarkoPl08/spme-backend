@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const SubscriptionPackages  = require('../models/SubscriptionPackages');
 const User  = require('../models/User');
+const loggingAspect = require('../aspects/loggingAspect');
 
-router.get('/packages', async (req, res) => {
+router.get('/packages', loggingAspect, async (req, res) => {
     try {
         const packages = await SubscriptionPackages.findAll();
         res.json(packages);
