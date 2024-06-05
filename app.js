@@ -14,7 +14,8 @@ const photoRoutes = require('./routes/photoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/auth/auth');
 const authenticateToken = require('./middlewares/authenticateToken');
-const logAction = require('./middlewares/logging');
+const responseTime = require('response-time');
+const { requestCount, requestDuration, register } = require('./config/metrics');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -33,6 +34,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use((req, res, next) => {
+  requestCount.inc();
+  next();
+});
+
+app.use(responseTime((req, res, time) => {
+  requestDuration.observe(time / 1000);
+}));
+
 app.use(passport.initialize());
 
 //app.use(logAction);
@@ -49,7 +59,10 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/admin', authenticateToken, adminRoutes);
 
-
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 app.use(function(req, res, next) {
   res.status(404).send('404 - Not Found');
