@@ -1,13 +1,14 @@
-const { Photos, User, SubscriptionPackages } = require('../models');
-const { uploadFile } = require('../config/awsConfig');
+const {Photos, User, SubscriptionPackages} = require('../models');
+const {uploadFile} = require('../config/awsConfig');
 const PhotoProcessingFacade = require('../facades/photoProcessingFacade');
 const path = require('path');
 const fs = require('fs');
+const {Op} = require("sequelize");
 
 class PhotoService {
     static async uploadPhoto(req) {
         try {
-            const { userId, description, hashtags, resizeWidth, resizeHeight, format } = req.body;
+            const {userId, description, hashtags, resizeWidth, resizeHeight, format} = req.body;
             const originalFilePath = req.file.path;
             const photoSize = req.file.size / (1024 * 1024);
             const bucketName = process.env.AWS_S3_BUCKET_NAME;
@@ -36,11 +37,27 @@ class PhotoService {
             const originalPath = path.join(__dirname, '..', 'uploads', originalKey);
             const processedPath = path.join(__dirname, '..', 'uploads', 'processed', path.basename(processedKey));
 
+            // Ensure directories exist
+            const originalDir = path.dirname(originalPath);
+            const processedDir = path.dirname(processedPath);
+
+            if (!fs.existsSync(originalDir)) {
+                fs.mkdirSync(originalDir, {recursive: true});
+            }
+
+            if (!fs.existsSync(processedDir)) {
+                fs.mkdirSync(processedDir, {recursive: true});
+            }
+
             await uploadFile(originalFilePath, bucketName, originalKey);
 
             fs.copyFileSync(originalFilePath, originalPath);
 
-            const processedBuffer = await PhotoProcessingFacade.processPhoto(originalFilePath, { resizeWidth, resizeHeight, format });
+            const processedBuffer = await PhotoProcessingFacade.processPhoto(originalFilePath, {
+                resizeWidth,
+                resizeHeight,
+                format
+            });
 
             PhotoProcessingFacade.saveFile(processedBuffer, processedPath);
             await uploadFile(processedPath, bucketName, processedKey);
@@ -82,12 +99,12 @@ class PhotoService {
         return photo;
     }
 
-    static async searchPhotos({ description, hashtags, startDate, endDate, username }) {
+    static async searchPhotos({description, hashtags, startDate, endDate, username}) {
         let where = {};
 
-        if (description) where.Description = { [Op.like]: `%${description}%` };
-        if (hashtags) where.Hashtags = { [Op.like]: `%${hashtags}%` };
-        if (startDate && endDate) where.UploadDateTime = { [Op.between]: [new Date(startDate), new Date(endDate)] };
+        if (description) where.Description = {[Op.like]: `%${description}%`};
+        if (hashtags) where.Hashtags = {[Op.like]: `%${hashtags}%`};
+        if (startDate && endDate) where.UploadDateTime = {[Op.between]: [new Date(startDate), new Date(endDate)]};
 
         return Photos.findAll({
             where,
@@ -95,7 +112,7 @@ class PhotoService {
                 {
                     model: User,
                     attributes: ['Username'],
-                    where: username ? { Username: { [Op.like]: `%${username}%` } } : {},
+                    where: username ? {Username: {[Op.like]: `%${username}%`}} : {},
                 }
             ]
         });

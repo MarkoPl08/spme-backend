@@ -16,7 +16,7 @@ const validatePackageUpdate = (user, now) => {
 };
 
 const updateUserPackage = (user, packageId, now) => ({
-    ...user,
+    ...user.toJSON(),
     PackageID: packageId,
     LastPackageUpdate: now,
 });
@@ -32,20 +32,25 @@ router.get('/packages', asyncHandler(async (req, res) => {
 
 router.post('/setPackage', asyncHandler(async (req, res) => {
     const {userId, packageId} = req.body;
-    const user = await User.findByPk(userId);
-    if (!user) {
-        return res.status(404).json({message: 'User not found'});
+    try {
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({message: 'User not found'});
+        }
+
+        const now = new Date();
+        if (!validatePackageUpdate(user, now)) {
+            return res.status(403).json({message: 'You can only change your package once every 24 hours'});
+        }
+
+        const updatedUser = processUserData(user, user => updateUserPackage(user, packageId, now));
+        await User.update(updatedUser, {where: {UserID: userId}});
+
+        res.json({message: 'Package updated successfully', user: updatedUser});
+    } catch (error) {
+        console.error('Error in setPackage:', error);
+        res.status(500).json({message: 'Internal server error', error: error.message});
     }
-
-    const now = new Date();
-    if (!validatePackageUpdate(user, now)) {
-        return res.status(403).json({message: 'You can only change your package once every 24 hours'});
-    }
-
-    const updatedUser = processUserData(user, user => updateUserPackage(user, packageId, now));
-    await User.update(updatedUser, {where: {id: userId}});
-
-    res.json({message: 'Package updated successfully', user: updatedUser});
 }));
 
 router.get('/consumption/:userId', asyncHandler(async (req, res) => {
@@ -81,7 +86,7 @@ router.post('/changePackage', asyncHandler(async (req, res) => {
     }
 
     const updatedUser = processUserData(user, user => updateUserPackage(user, newPackageId, now));
-    await User.update(updatedUser, {where: {id: userId}});
+    await User.update(updatedUser, {where: {UserID: userId}}); // Use UserID here
 
     res.json({message: 'Package changed successfully', user: updatedUser});
 }));
