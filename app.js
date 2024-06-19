@@ -45,8 +45,6 @@ app.use(responseTime((req, res, time) => {
 
 app.use(passport.initialize());
 
-//app.use(logAction);
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/', indexRouter);

@@ -37,7 +37,6 @@ class PhotoService {
             const originalPath = path.join(__dirname, '..', 'uploads', originalKey);
             const processedPath = path.join(__dirname, '..', 'uploads', 'processed', path.basename(processedKey));
 
-            // Ensure directories exist
             const originalDir = path.dirname(originalPath);
             const processedDir = path.dirname(processedPath);
 

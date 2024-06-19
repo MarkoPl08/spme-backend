@@ -86,7 +86,7 @@ router.post('/changePackage', asyncHandler(async (req, res) => {
     }
 
     const updatedUser = processUserData(user, user => updateUserPackage(user, newPackageId, now));
-    await User.update(updatedUser, {where: {UserID: userId}}); // Use UserID here
+    await User.update(updatedUser, {where: {UserID: userId}});
 
     res.json({message: 'Package changed successfully', user: updatedUser});
 }));

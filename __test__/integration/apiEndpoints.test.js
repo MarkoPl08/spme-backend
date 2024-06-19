@@ -1,7 +1,7 @@
 require('dotenv').config();
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
-const app = require('../../app'); // Adjust the path to where your Express app is defined
+const app = require('../../app');
 
 jest.mock('sequelize', () => {
     const SequelizeMock = require('sequelize-mock');
@@ -40,9 +40,9 @@ describe('API Endpoints', () => {
     let token;
 
     beforeAll(() => {
-        const user = { UserID: 1, RoleID: 'admin' }; // Ensure payload matches login route
+        const user = { UserID: 1, RoleID: 'admin' };
         token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1h' });
-        console.log('Generated token:', token);  // Debug statement
+        console.log('Generated token:', token);
     });
 
     test('GET /api/photos/all returns 200', async () => {
@@ -50,8 +50,8 @@ describe('API Endpoints', () => {
             .get('/api/photos/all')
             .set('Authorization', `Bearer ${token}`);
 
-        console.log('Response status:', response.status);  // Debug statement
-        console.log('Response body:', response.body);      // Debug statement
+        console.log('Response status:', response.status);
+        console.log('Response body:', response.body);
 
         expect(response.status).toBe(200);
         expect(response.body).toBeInstanceOf(Array);

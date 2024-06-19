@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Configure AWS SDK
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
@@ -13,7 +12,6 @@ const s3 = new S3Client({
     },
 });
 
-// Upload file to S3
 async function uploadFile(filePath, bucketName, key) {
     const fileContent = fs.readFileSync(filePath);
     const uploadParams = {
@@ -29,7 +27,6 @@ async function uploadFile(filePath, bucketName, key) {
     }
 }
 
-// Download file from S3
 async function downloadFile(bucketName, key, downloadPath) {
     const downloadParams = {
         Bucket: bucketName,
@@ -45,7 +42,6 @@ async function downloadFile(bucketName, key, downloadPath) {
     }
 }
 
-// Utility function to convert a stream to a buffer
 const streamToBuffer = async (stream) => {
     return new Promise((resolve, reject) => {
         const chunks = [];
@@ -55,7 +51,6 @@ const streamToBuffer = async (stream) => {
     });
 };
 
-// Delete file from S3
 async function deleteFile(bucketName, key) {
     const deleteParams = {
         Bucket: bucketName,
@@ -69,5 +64,4 @@ async function deleteFile(bucketName, key) {
     }
 }
 
-// Exporting functions as an adapter interface
 module.exports = {uploadFile, downloadFile, deleteFile};
